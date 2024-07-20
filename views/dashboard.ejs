@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="/styles.css"> <!-- Optional: Link to your CSS file -->
+</head>
+
+<body>
+    <h1>Welcome, <%= user.username %>!</h1>
+
+    <h2>Your Files</h2>
+
+    <table>
+        <thead>
+            <tr>
+                <th>File Name</th>
+                <th>Size</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% files.forEach(file => { %>
+                <tr>
+                    <td><%= file.originalName %></td>
+                    <td><%= file.size %> bytes</td>
+                    <td>
+                        <a href="/download/<%= file._id %>">Download</a>
+                        <a href="/delete/<%= file._id %>">Delete</a>
+                    </td>
+                </tr>
+            <% }); %>
+        </tbody>
+    </table>
+
+    <a href="/upload">Upload New File</a>
+    <a href="/logout">Logout</a>
+</body>
+
+</html>

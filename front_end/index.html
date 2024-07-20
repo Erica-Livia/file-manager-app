@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Manager</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        h1 {
+            text-align: center;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        input[type="file"] {
+            display: block;
+            margin: 10px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        button {
+            padding: 5px 10px;
+            margin: 0 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>File Manager</h1>
+        
+        <!-- File Upload Form -->
+        <form id="uploadForm">
+            <input type="file" name="file" id="fileInput" required>
+            <button type="submit">Upload File</button>
+        </form>
+        
+        <!-- List of Files -->
+        <h2>Uploaded Files</h2>
+        <table id="filesTable">
+            <thead>
+                <tr>
+                    <th>File Name</th>
+                    <th>Size</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Files will be listed here -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        const uploadForm = document.getElementById('uploadForm');
+        const filesTable = document.getElementById('filesTable').getElementsByTagName('tbody')[0];
+
+        // Function to upload file
+        uploadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(uploadForm);
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to upload file');
+                }
+
+                await loadFiles();
+            } catch (err) {
+                alert(err.message);
+            }
+        });
+
+        // Function to load files
+        async function loadFiles() {
+            try {
+                const response = await fetch('/list');
+                const files = await response.json();
+
+                filesTable.innerHTML = ''; // Clear existing table rows
+
+                files.forEach(file => {
+                    const row = filesTable.insertRow();
+                    row.insertCell().textContent = file.originalName;
+                    row.insertCell().textContent = `${file.size} bytes`;
+
+                    const actionsCell = row.insertCell();
+                    const downloadButton = document.createElement('button');
+                    downloadButton.textContent = 'Download';
+                    downloadButton.onclick = () => downloadFile(file._id);
+                    
+                    const deleteButton = document.createElement('button');
+                    deleteButton.textContent = 'Delete';
+                    deleteButton.onclick = () => deleteFile(file._id);
+
+                    actionsCell.appendChild(downloadButton);
+                    actionsCell.appendChild(deleteButton);
+                });
+            } catch (err) {
+                alert(err.message);
+            }
+        }
+
+        // Function to download file
+        async function downloadFile(fileId) {
+            try {
+                const response = await fetch(`/download/${fileId}`);
+                if (!response.ok) {
+                    throw new Error('Failed to download file');
+                }
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = fileId;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+            } catch (err) {
+                alert(err.message);
+            }
+        }
+
+        // Function to delete file
+        async function deleteFile(fileId) {
+            try {
+                const response = await fetch(`/delete/${fileId}`, {
+                    method: 'DELETE'
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to delete file');
+                }
+
+                await loadFiles();
+            } catch (err) {
+                alert(err.message);
+            }
+        }
+
+        // Load files when the page loads
+        window.onload = loadFiles;
+    </script>
+</body>
+</html>
